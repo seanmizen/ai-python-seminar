@@ -5,6 +5,7 @@ import uuid
 # base class for all objects that can be in a GridWorld. Not much here other than
 # the world of which they are a part and their x-y coordinates in the world (which may
 # be actual or believed coordinates)
+# test
 
 
 class GridObject(object):

@@ -108,7 +108,7 @@ worldValues4 = {'time': 0, 'agent1Pos': (
     round(worldX/2), round(worldY/2)), 'points': points4}
 
 # choose which world you want to be in here. You can also make your own
-worldValues = worldValues4
+worldValues = worldValues2
 
 # set up the GUI. Pygame is rather low-level, so this all looks like very 'bit-twiddling' commands
 pygame.init()

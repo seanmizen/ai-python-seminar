@@ -43,6 +43,7 @@ class GridPoint:
             raise ValueError(
                 "Grid point ({0},{1}) has an invalid or corrupted neighbour list", self.x, self.y)
         self._neighbours[direction] = neighbour
+        print("neighbour " + str(neighbour))
 
     # called by the grid world itself to place an occupant here.
     def placeOccupant(self, parent, occupant: GridObject):

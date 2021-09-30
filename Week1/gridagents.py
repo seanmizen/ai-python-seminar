@@ -155,6 +155,7 @@ class GridAgent(GridObject):
         # get the next place to check. Are we there?
         if x == self._frontier[-1][0] and y == self._frontier[-1][1]:
             # Yes. Explore.
+            # remove current cell from frontier
             nowAt = self._frontier.pop()
             # add our point to the map
             self._map[nowAt] = {}

@@ -178,12 +178,13 @@ class GridAgent(GridObject):
                 # TODO
                 # ----- Choose which search method you are using with these lines -------
 
-                #self._curPath = self._iterativeDeepeningSearch(currentLoc,self._goals[0])
+                # self._curPath = self._iterativeDeepeningSearch(
+                #    currentLoc, self._goals[0])
                 self._curPath = self._depthFirstSearch(
                     currentLoc, self._goals[0])
-                self._curPath = self._breadthFirstSearch(
-                    currentLoc, self._goals[0])
-                #self._curPath = self._AStarSearch(currentLoc, self._goals[0])
+                # self._curPath = self._breadthFirstSearch(
+                #    currentLoc, self._goals[0])
+                # self._curPath = self._AStarSearch(currentLoc, self._goals[0])
 
                 # could have an unreachable goal, which we just remove
                 if self._curPath is None:
@@ -355,15 +356,54 @@ class GridAgent(GridObject):
     # by using a ply argument, we can trivially implement iterative deepening. An explored
     # parameter - a list of expanded nodes - makes sure we can't end up in endless loops
     def _depthFirstSearch(self, start, target, ply=0, explored=None):
+        # self._currentAction = Action(self, Action.inaction, None, 0)
+        # self.owned = []  # any objects the agent may possess
+        # a dictionary of (x,y) positions containing a target dictionary of accessible locations with distances
+        # self._map = {}
+        # self._frontier = [(self.x, self.y)]  # initialise our start point
+        # this will keep track of what our path has been, so we can navigate back to a starting point
+        # self._backtrack = []
+        # what should the agent's goal(s) be? This can be set either internally or externally
+        # self._goals = []
+        # self._curPath = None  # this will be the path list the agent will follow. None means nowhere to go; empty indicates at destination
+
+        if ply > 5:
+            return
+        self._backtrack.append(start)
+        here = self._world.getLocation(start[0], start[1])
+        if here.canGo(self._world.North):
+            nextLoc = (start[0], start[1] - 1)
+            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            pass
+        if here.canGo(self._world.East):
+            nextLoc = (start[0] + 1, start[1])
+            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            pass
+        if here.canGo(self._world.South):
+            nextLoc = (start[0], start[1] + 1)
+            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            pass
+        if here.canGo(self._world.West):
+            nextLoc = (start[0] - 1, start[1])
+            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            pass
+
+        # start = ???
+        # target = ???
+        # ply = the thing with the thing
+        # fff
+        # NESW - North is node 1. First traversal should look like NNNNNNNNNN^ENNN (etc etc)
         return None
 
     # TODO
     # here is the extension to iterative deepening
     def _iterativeDeepeningSearch(self, start, target):
+
         return None
 
     # TODO
     # A* search is an informed search, and expects a heuristic, which should be a
     # function of 2 variables, both tuples, the start, and the target.
     def _AStarSearch(self, start, target, heuristic=None):
+
         return None

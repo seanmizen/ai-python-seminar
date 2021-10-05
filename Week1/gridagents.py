@@ -155,7 +155,6 @@ class GridAgent(GridObject):
         # get the next place to check. Are we there?
         if x == self._frontier[-1][0] and y == self._frontier[-1][1]:
             # Yes. Explore.
-            # remove current cell from frontier
             nowAt = self._frontier.pop()
             # add our point to the map
             self._map[nowAt] = {}
@@ -190,10 +189,12 @@ class GridAgent(GridObject):
             # somewhere new to move to - go to it
             if goingPlaces:
                 self._backtrack.append(nowAt)
+                print("goingPlaces")
                 GridObject.__setattr__(self, "_currentAction", Action(
                     self, Action.move, None, self._getDirection(self._frontier[-1])))
             # nowhere new: backtrack to our previous position
             elif len(self._backtrack) > 0:
+                print("Backtrack bigger than 0 - let's backtrack")
                 GridObject.__setattr__(self, "_currentAction", Action(
                     self, Action.move, None, self._getDirection(self._backtrack.pop())))
             # nowhere at all: we are painted into a corner; no point in trying to move.
@@ -206,11 +207,15 @@ class GridAgent(GridObject):
             # Has this depth of the backtrack chain been thoroughly explored?
             if self._frontier[-1] in self._map[(x, y)]:
                 # No. Go down the next available path
+                print("No! We're at ({0}, {1}), lets go to next available path at ({2}, {3})".format(
+                    x, y, self._frontier[-1][0], self._frontier[-1][1]))
                 self._backtrack.append((x, y))
                 GridObject.__setattr__(self, "_currentAction", Action(
                     self, Action.move, None, self._getDirection(self._frontier[-1])))
             # Yes. Backtrack another step if we can
             elif len(self._backtrack) > 0:
+                print("Backtrack another step if we can. Backtrack (pop) to ({0}, {1})".format(
+                    self._backtrack[-1][0], self._backtrack[-1][1]))
                 GridObject.__setattr__(self, "_currentAction", Action(
                     self, Action.move, None, self._getDirection(self._backtrack.pop())))
             else:

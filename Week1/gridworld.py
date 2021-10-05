@@ -43,7 +43,6 @@ class GridPoint:
             raise ValueError(
                 "Grid point ({0},{1}) has an invalid or corrupted neighbour list", self.x, self.y)
         self._neighbours[direction] = neighbour
-        print("neighbour " + str(neighbour))
 
     # called by the grid world itself to place an occupant here.
     def placeOccupant(self, parent, occupant: GridObject):
@@ -124,7 +123,7 @@ class GridWorld:
     South = 2
     West = 3
 
-    def __init__(self, h, w, max_time=0, update_interval=0.05, points=None, occupants=None):
+    def __init__(self, h, w, max_time=0, update_interval=0.2, points=None, occupants=None):
 
         self._time = 0
         # a greater max_time than 0 will generate a world where time moves forward on each clock tick.
@@ -183,8 +182,8 @@ class GridWorld:
         if action.actionCode == action.move:
             destX = action.x
             destY = action.y
-            print("Moving agent {0} from position ({1},{2})".format(
-                action.agent.objectName, destX, destY))
+            originX = destX
+            originY = destY
             if action.actionDirection == 3:
                 destX -= 1
             if action.actionDirection == 2:
@@ -193,6 +192,8 @@ class GridWorld:
                 destX += 1
             if action.actionDirection == 0:
                 destY -= 1
+            print("Time {0} - Moving agent {1} from position ({2},{3}) to ({4},{5}) - backtrack {6}".format(
+                self._time, action.agent.objectName, originX, originY, destX, destY, len(action.agent._backtrack)))
             if destX < 0 or destY < 0 or destX >= len(self._grid) or destY >= len(self._grid[0]):
                 return self._grid[action.y][action.x]
             newSquare = self._grid[action.y][action.x].vacate(
@@ -205,23 +206,22 @@ class GridWorld:
     def run(self, ticks=0):
         tickCount = 0
         while (ticks == 0 or tickCount < ticks) and self._tick():
-            print("Time in the world is now {0}".format(self._time))
             time.sleep(self._waitTime)
             tickCount += 1
 
-    @property
+    @ property
     def runTime(self):
         return self._maxTime
 
     def reset(self):
         self._time = 0
 
-    @property
+    @ property
     def time(self):
         return self._time
 
     # this will return the maximum x and y dimension of the world
-    @property
+    @ property
     def boundary(self):
         return (len(self._grid), len(self._grid[0]))
 

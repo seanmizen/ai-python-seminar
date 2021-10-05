@@ -108,7 +108,7 @@ worldValues4 = {'time': 0, 'agent1Pos': (
     round(worldX/2), round(worldY/2)), 'points': points4}
 
 # choose which world you want to be in here. You can also make your own
-worldValues = worldValues2
+worldValues = worldValues1
 
 # set up the GUI. Pygame is rather low-level, so this all looks like very 'bit-twiddling' commands
 pygame.init()
@@ -178,7 +178,6 @@ worldThread.start()
 
 # keep redrawing until the end of the simulation
 while curTime < runtime:
-
     # you can end the simulation by pressing 'q'. This triggers an event which is also passed into the world loop
     try:
         quitevent = next(evt for evt in pygame.event.get(
@@ -192,21 +191,26 @@ while curTime < runtime:
             # some race conditions here, given that the agent lives in a GridWorld updated in a separate thread, but that
             # might only result in some odd draws.
             if worldValues['agent1Pos'][0] != agentOldPos[0] or worldValues['agent1Pos'][1] != agentOldPos[1]:
-                pygame.draw.circle(gridSquares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]], pygame.Color(
+
+                x = worldValues['agent1Pos'][0]
+                y = worldValues['agent1Pos'][1]
+
+                pygame.draw.circle(gridSquares[x][y], pygame.Color(
                     255, 0, 0), (round(surfaceSize[0]/(2*worldX)), round(surfaceSize[1]/(2*worldY))), round(surfaceSize[0]/(3*worldX)))
-                displayedBackground.blit(gridSquares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]],
-                                         squares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]])
+                displayedBackground.blit(gridSquares[x][y],
+                                         squares[x][y])
                 # gridSquares[agentOldPos[0]][agentOldPos[1]].fill(
                 #    pygame.Color(224, 224, 255))
                 # re-colour visited cells
                 gridSquares[agentOldPos[0]][agentOldPos[1]].fill(
                     pygame.Color(210, 150, 150))
+
                 pygame.draw.rect(gridSquares[agentOldPos[0]][agentOldPos[1]], pygame.Color(
                     0, 0, 0), squares[0][0], 5)
                 displayedBackground.blit(
                     gridSquares[agentOldPos[0]][agentOldPos[1]], squares[agentOldPos[0]][agentOldPos[1]])
                 displaySurface.blit(displayedBackground, backgroundRect)
                 pygame.display.flip()
-                agentOldPos[0] = worldValues['agent1Pos'][0]
-                agentOldPos[1] = worldValues['agent1Pos'][1]
+                agentOldPos[0] = x
+                agentOldPos[1] = y
             curTime += 1

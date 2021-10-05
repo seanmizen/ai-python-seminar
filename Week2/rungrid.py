@@ -208,7 +208,11 @@ while curTime < runtime:
              if worldValues['agent1Pos'][0] != agentOldPos[0] or worldValues['agent1Pos'][1] != agentOldPos[1]:
                 pygame.draw.circle(gridSquares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]],pygame.Color(255,0,0),(round(surfaceSize[0]/(2*worldX)),round(surfaceSize[1]/(2*worldY))),round(surfaceSize[0]/(3*worldX)))
                 displayedBackground.blit(gridSquares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]],squares[worldValues['agent1Pos'][0]][worldValues['agent1Pos'][1]])
-                gridSquares[agentOldPos[0]][agentOldPos[1]].fill(pygame.Color(224,224,255))
+                #gridSquares[agentOldPos[0]][agentOldPos[1]].fill(pygame.Color(224,224,255))
+                # re-colour visited cells
+                gridSquares[agentOldPos[0]][agentOldPos[1]].fill(
+                    pygame.Color(210, 150, 150))
+
                 pygame.draw.rect(gridSquares[agentOldPos[0]][agentOldPos[1]],pygame.Color(0,0,0),squares[0][0],5)
                 displayedBackground.blit(gridSquares[agentOldPos[0]][agentOldPos[1]],squares[agentOldPos[0]][agentOldPos[1]])
                 redraw = True

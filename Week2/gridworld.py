@@ -189,8 +189,8 @@ class GridWorld:
         if action.actionCode == action.move:
             destX = action.x
             destY = action.y
-            print("Moving agent {0} from position ({1},{2})".format(
-                action.agent.objectName, destX, destY))
+            originX = destX
+            originY = destY
             if action.actionDirection == 3:
                 destX -= 1
             if action.actionDirection == 2:
@@ -199,6 +199,9 @@ class GridWorld:
                 destX += 1
             if action.actionDirection == 0:
                 destY -= 1
+            print("Time {0} - Moving agent {1} from position ({2},{3}) to ({4},{5})".format(
+                self._time, action.agent.objectName, originX, originY, destX, destY))
+
             if destX < 0 or destY < 0 or destX >= len(self._grid) or destY >= len(self._grid[0]):
                 return self._grid[action.y][action.x]
             newSquare = self._grid[action.y][action.x].vacate(
@@ -230,7 +233,6 @@ class GridWorld:
     def run(self, ticks=0):
         tickCount = 0
         while (ticks == 0 or tickCount < ticks) and self._tick():
-            print("Time in the world is now {0}".format(self._time))
             time.sleep(self._waitTime)
             tickCount += 1
 

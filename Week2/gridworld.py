@@ -76,6 +76,10 @@ class GridPoint:
     # gives an agent visibility on whether it can access the point.
     def canGo(self, direction):
         neighbour = self._neighbours[direction]
+
+        if direction == -1:
+            return False
+
         if neighbour is None or neighbour.occupied:
             return False
         return True
@@ -130,7 +134,7 @@ class GridWorld:
     South = 2
     West = 3
 
-    def __init__(self, h, w, max_time=0, update_interval=0.05, points=None, occupants=None):
+    def __init__(self, h, w, max_time=0, update_interval=0.2, points=None, occupants=None):
 
         self._time = 0
         # a greater max_time than 0 will generate a world where time moves forward on each clock tick.

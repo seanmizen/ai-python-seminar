@@ -61,7 +61,7 @@ class Action():
     # define the possible actions here
     inaction = -1
     move = 0
-    tag = 1  # new
+    tag = 1
 
     # set up a basic action. An action stores the agent, what action it is doing,
     # in what direction the action is made, any possible object of the action (self.actedUpon),
@@ -111,8 +111,7 @@ class GridAgent(GridObject):
         self.owned = []  # any objects the agent may possess
         # a dictionary of (x,y) positions containing a target dictionary of accessible locations with distances
         self._map = {}
-        # initialise our start point so we know when the map is complete
-        self._frontier = [(self.x, self.y)]
+        self._frontier = [(self.x, self.y)]  # initialise our start point
         # this will keep track of what our path has been, so we can navigate back to a starting point
         self._backtrack = []
         # what should the agent's goal(s) be? This can be set either internally or externally
@@ -179,13 +178,10 @@ class GridAgent(GridObject):
                 # TODO
                 # ----- Choose which search method you are using with these lines -------
 
-                # self._curPath = self._iterativeDeepeningSearch(
-                #    currentLoc, self._goals[0])
-                self._curPath = self._depthFirstSearch(
+                self._curPath = self._iterativeDeepeningSearch(
                     currentLoc, self._goals[0])
-                # self._curPath = self._breadthFirstSearch(
-                #    currentLoc, self._goals[0])
-                # self._curPath = self._AStarSearch(currentLoc, self._goals[0])
+                #self._curPath = self._breadthFirstSearch(currentLoc,self._goals[0])
+                #self._curPath = self._AStarSearch(currentLoc, self._goals[0])
 
                 # could have an unreachable goal, which we just remove
                 if self._curPath is None:
@@ -310,33 +306,30 @@ class GridAgent(GridObject):
             pass
 
     # convenience function allows us to extract the direction to a target location
-    def _getDirection(self, target, immediate_neighbours_only=True):
-        # [2021-10-27 SM] changed to adjacent-only cells
-        if immediate_neighbours_only:
-            if target[0] == self.x and target[1] == self.y - 1:
-                return self._world.North
-            elif target[0] == self.x + 1 and target[1] == self.y:
-                return self._world.East
-            elif target[0] == self.x and target[1] == self.y + 1:
-                return self._world.South
-            elif target[0] == self.x - 1 and target[1] == self.y:
-                return self._world.West
-            else:
+    def _getDirection(self, target):
+        if target[0] == self.x:
+            if target[1] == self.y:
                 return self._world.Nowhere
+            elif target[1] > self.y:
+                return self._world.South
+            else:
+                return self._world.North
+        elif target[0] < self.x:
+            if target[1] != self.y:
+                return self._world.Nowhere
+            else:
+                return self._world.West
         else:
-            # Get direction - from any distance
-            # TODO
-            return self._world.Nowhere
+            if target[1] != self.y:
+                return self._world.Nowhere
+            else:
+                return self._world.East
 
     # an efficient way to identify if a tuple is in a list. Creates a python generator expression to evaluate.
     def _inFrontier(self, target):
-        # deprecated
-        return self.inTupleList(target, self._frontier)
-
-    def inTupleList(self, target, list):
         try:
             nextTgt = next(
-                loc for loc in list if loc[0] == target[0] and loc[1] == target[1])
+                loc for loc in self._frontier if loc[0] == target[0] and loc[1] == target[1])
         except StopIteration:
             return None
         return nextTgt
@@ -352,7 +345,30 @@ class GridAgent(GridObject):
     # gridworld, this isn't crippling, the branching factor is only 4, but consider how the problem
     # would scale to a 100*100 grid (!)
     def _breadthFirstSearch(self, start, target):
-
+        if start not in self._map:
+            return None
+        if start == target:
+            return [start]
+        explored = set()
+        path = {}
+        self._frontier = [start]
+        while len(self._frontier) > 0:
+            curNode = self._frontier.pop(0)
+            explored.add(curNode)
+            expansion = dict([(node, curNode) for node in self._map[curNode].keys()
+                              if node not in explored and node not in path])
+            if target in expansion:
+                foundPath = [target]
+                parent = curNode
+                while parent in path:
+                    foundPath.append(parent)
+                    parent = path[parent]
+                foundPath.append(parent)
+                foundPath.reverse()
+                return foundPath
+            else:
+                self._frontier.extend(expansion.keys())
+                path.update(expansion)
         return None
 
     # TODO
@@ -360,50 +376,79 @@ class GridAgent(GridObject):
     # by using a ply argument, we can trivially implement iterative deepening. An explored
     # parameter - a list of expanded nodes - makes sure we can't end up in endless loops
     def _depthFirstSearch(self, start, target, ply=0, explored=None):
-        # self._currentAction = Action(self, Action.inaction, None, 0)
-        # self.owned = []  # any objects the agent may possess
-        # a dictionary of (x,y) positions containing a target dictionary of accessible locations with distances
-        # self._map = {}
-        # self._frontier = [(self.x, self.y)]  # initialise our start point
-        # this will keep track of what our path has been, so we can navigate back to a starting point
-        # self._backtrack = []
-        # what should the agent's goal(s) be? This can be set either internally or externally
-        # self._goals = []
-        # self._curPath = None  # this will be the path list the agent will follow. None means nowhere to go; empty indicates at destination
-
-        if ply > 5:
-            return
-        self._backtrack.append(start)
-        here = self._world.getLocation(start[0], start[1])
-        if here.canGo(self._world.North):
-            nextLoc = (start[0], start[1] - 1)
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
-        if here.canGo(self._world.East):
-            nextLoc = (start[0] + 1, start[1])
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
-        if here.canGo(self._world.South):
-            nextLoc = (start[0], start[1] + 1)
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
-        if here.canGo(self._world.West):
-            nextLoc = (start[0] - 1, start[1])
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
-
-        # start = ???
-        # target = ???
-        # ply = the thing with the thing
-        # fff
-        # NESW - North is node 1. First traversal should look like NNNNNNNNNN^ENNN (etc etc)
+        if start not in self._map:
+            return None
+        if start == target:
+            return [start]
+        if ply <= 0:
+            return []
+        if explored is None:
+            explored = set([start])
+        bottomedOut = False
+        for nextNode in (node for node in self._map[start].keys() if node not in explored):
+            foundPath = self._depthFirstSearch(
+                nextNode, target, ply-1, explored.union(set([nextNode])))
+            if foundPath is not None:
+                if len(foundPath) > 0:
+                    foundPath.insert(0, start)
+                    return foundPath
+                else:
+                    bottomedOut = True
+        if bottomedOut:
+            return []
         return None
 
     # TODO
     # here is the extension to iterative deepening
     def _iterativeDeepeningSearch(self, start, target):
-
-        return None
+        ply = 1
+        foundPath = []
+        while foundPath is not None and len(foundPath) == 0:
+            foundPath = self._depthFirstSearch(start, target, ply)
+            ply += 1
+        return foundPath
 
     # TODO
     # A* search is an informed search, and expects a heuristic, which should be a
     # function of 2 variables, both tuples, the start, and the target.
     def _AStarSearch(self, start, target, heuristic=None):
-
+        if start not in self._map:
+            return None
+        if start == target:
+            return [start]
+        if heuristic is None:
+            def heuristic(x, y): return math.sqrt(
+                (x[0]-y[0])**2+(x[1]-y[1])**2)
+        # these are the nodes that have been completely expanded, so don't need to be traced backwards
+        explored = set()
+        # these are the nodes still to be explored, sorted by estimated cost. They need to have
+        # the complete path stored because any one of them might contain the best solution. We
+        # arrange this as a nested dictionary to get a reasonably straightforward way to look up
+        # the cheapest path. A heapq could also work but introduces implementation complexities.
+        expanded = {heuristic(start, target): {start: [start]}}
+        while len(expanded) > 0:
+            bestPath = min(expanded.keys())
+            nextExpansion = expanded[bestPath]
+            if target in nextExpansion:
+                return nextExpansion[target]
+            nextNode = nextExpansion.popitem()
+            while len(nextExpansion) > 0 and nextNode[0] in explored:
+                nextNode = nextExpansion.popitem()
+            if len(nextExpansion) == 0:
+                del expanded[bestPath]
+            if nextNode[0] not in explored:
+                explored.add(nextNode[0])
+                expansionTargets = [
+                    node for node in self._map[nextNode[0]].items() if node[0] not in explored]
+                while len(expansionTargets) > 0:
+                    expTgt = expansionTargets.pop()
+                    estimatedDistance = bestPath - \
+                        heuristic(nextNode[0], target) + \
+                        expTgt[1]+heuristic(expTgt[0], target)
+                    if estimatedDistance in expanded:
+                        expanded[estimatedDistance][expTgt[0]
+                                                    ] = nextNode[1]+[expTgt[0]]
+                    else:
+                        expanded[estimatedDistance] = {
+                            expTgt[0]: nextNode[1]+[expTgt[0]]}
         return None

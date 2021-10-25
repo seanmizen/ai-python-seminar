@@ -69,6 +69,12 @@ class GridPoint:
     # gives an agent visibility on whether it can access the point.
     def canGo(self, direction):
         neighbour = self._neighbours[direction]
+
+        if direction == -1:
+            # I shouldn't have to do this. I can't figure out why neighbour[-1] is returning something it shouldn't
+            # Oh wait, I just did :)
+            return False
+
         if neighbour is None or neighbour.occupied:
             return False
         return True
@@ -123,7 +129,7 @@ class GridWorld:
     South = 2
     West = 3
 
-    def __init__(self, h, w, max_time=0, update_interval=0.2, points=None, occupants=None):
+    def __init__(self, h, w, max_time=0, update_interval=0.1, points=None, occupants=None):
 
         self._time = 0
         # a greater max_time than 0 will generate a world where time moves forward on each clock tick.
@@ -192,8 +198,8 @@ class GridWorld:
                 destX += 1
             if action.actionDirection == 0:
                 destY -= 1
-            print("Time {0} - Moving agent {1} from position ({2},{3}) to ({4},{5}) - backtrack {6}".format(
-                self._time, action.agent.objectName, originX, originY, destX, destY, len(action.agent._backtrack)))
+            print("Time {0} - Moving agent {1} from position ({2},{3}) to ({4},{5}) - backtrack {6} - frontier {7}".format(
+                self._time, action.agent.objectName, originX, originY, destX, destY, len(action.agent._backtrack), len(action.agent._frontier)))
             if destX < 0 or destY < 0 or destX >= len(self._grid) or destY >= len(self._grid[0]):
                 return self._grid[action.y][action.x]
             newSquare = self._grid[action.y][action.x].vacate(

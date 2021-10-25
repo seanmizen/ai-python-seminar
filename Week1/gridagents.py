@@ -5,7 +5,6 @@ import uuid
 # base class for all objects that can be in a GridWorld. Not much here other than
 # the world of which they are a part and their x-y coordinates in the world (which may
 # be actual or believed coordinates)
-# test
 
 
 class GridObject(object):
@@ -130,19 +129,13 @@ class GridAgent(GridObject):
         # Needed: explore the world. Decide if there's still something to explore, then
         # use appropriate search to explore the space.
 
-        # If the frontier exists at all, the map is not yet completely built and compacted
-        if self._frontier is not None:
-
-            # still some places to explore?
-            if len(self._frontier) > 0:
-                return self._depthFirstExploration(world, x, y)
-            # the map is finished but we still need to prune
-            else:
-                self._pruneMap()
-
-        # default action is just a random move in some direction.
-        GridObject.__setattr__(self, "_currentAction", Action(
-            self, Action.move, None, round(numpy.random.uniform(-0.49999, 3.5))))
+        if len(self._frontier) > 0:
+            GridObject.__setattr__(
+                self, "_currentAction", self._depthFirstExploration(world, x, y))
+        else:
+            # default action is just a random move in some direction.
+            GridObject.__setattr__(self, "_currentAction", Action(
+                self, Action.move, None, round(numpy.random.uniform(-0.49999, 3.5))))
         return self._currentAction
 
     # TODO
@@ -152,82 +145,60 @@ class GridAgent(GridObject):
     # to the last point where a choice was possible.
 
     def _depthFirstExploration(self, world, x, y):
-        # get the next place to check. Are we there?
-        if x == self._frontier[-1][0] and y == self._frontier[-1][1]:
-            # Yes. Explore.
-            nowAt = self._frontier.pop()
-            # add our point to the map
-            self._map[nowAt] = {}
-            # repetitive, but the indexing makes this more obvious than a for-loop:
-            # see what other locations we can access directly from here.
-            here = world.getLocation(x, y)
-            goingPlaces = False
-            if here.canGo(world.North):
-                there = (nowAt[0], nowAt[1]-1)
-                if there not in self._map and self._inFrontier(there) is None:
-                    goingPlaces = True
-                    self._frontier.append(there)
-                self._map[nowAt][there] = 1
-            if here.canGo(world.East):
-                there = (nowAt[0]+1, nowAt[1])
-                if there not in self._map and self._inFrontier(there) is None:
-                    goingPlaces = True
-                    self._frontier.append(there)
-                self._map[nowAt][there] = 1
-            if here.canGo(world.South):
-                there = (nowAt[0], nowAt[1]+1)
-                if there not in self._map and self._inFrontier(there) is None:
-                    goingPlaces = True
-                    self._frontier.append(there)
-                self._map[nowAt][there] = 1
-            if here.canGo(world.West):
-                there = (nowAt[0]-1, nowAt[1])
-                if there not in self._map and self._inFrontier(there) is None:
-                    goingPlaces = True
-                    self._frontier.append(there)
-                self._map[nowAt][there] = 1
-            # somewhere new to move to - go to it
-            if goingPlaces:
-                self._backtrack.append(nowAt)
-                print("goingPlaces")
-                GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.move, None, self._getDirection(self._frontier[-1])))
-            # nowhere new: backtrack to our previous position
-            elif len(self._backtrack) > 0:
-                print("Backtrack bigger than 0 - let's backtrack")
-                GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.move, None, self._getDirection(self._backtrack.pop())))
-            # nowhere at all: we are painted into a corner; no point in trying to move.
-            else:
-                GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.inaction, None, -1))
-            return self._currentAction
-        # not there. We must have backtracked.
-        elif (x, y) in self._map:
-            # Has this depth of the backtrack chain been thoroughly explored?
-            if self._frontier[-1] in self._map[(x, y)]:
-                # No. Go down the next available path
-                print("No! We're at ({0}, {1}), lets go to next available path at ({2}, {3})".format(
-                    x, y, self._frontier[-1][0], self._frontier[-1][1]))
+        # FIXME build the map, indexed by (origin)(destination) pairs
+        # self._map[(x, y)] = {}
+        # self._map[(x, y)][(x+1, y+1)] = {}
+        # _map[start][end] = distance (1)
+        # if possible_location in _map[my_location]:
+
+        if (x, y) not in self._map:
+            self._map[(x, y)] = {}
+        if (x, y) in self._frontier:
+            self._frontier.remove((x, y))
+
+        # step 1: can I go NESW? add to frontier.
+        # current_location is an instance of GridPoint (see: gridworld)
+        current_gridpoint = world.getLocation(x, y)
+        if current_gridpoint.canGo(world.North):
+            next_location = (x, y - 1)
+            if next_location not in self._map and next_location not in self._frontier:
+                self._frontier.append(next_location)
+            self._map[(x, y)][next_location] = 1
+        if current_gridpoint.canGo(world.East):
+            next_location = (x + 1, y)
+            if next_location not in self._map and next_location not in self._frontier:
+                self._frontier.append(next_location)
+            self._map[(x, y)][next_location] = 1
+        if current_gridpoint.canGo(world.South):
+            next_location = (x, y + 1)
+            if next_location not in self._map and next_location not in self._frontier:
+                self._frontier.append(next_location)
+            self._map[(x, y)][next_location] = 1
+        if current_gridpoint.canGo(world.West):
+            next_location = (x - 1, y)
+            if next_location not in self._map and next_location not in self._frontier:
+                self._frontier.append(next_location)
+            self._map[(x, y)][next_location] = 1
+
+        # step 2: now I've explored the area around me, choose a next step.
+        if len(self._frontier) > 0:
+            if current_gridpoint.canGo(self._getDirection(self._frontier[-1])):
+                # continue depth search
                 self._backtrack.append((x, y))
                 GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.move, None, self._getDirection(self._frontier[-1])))
-            # Yes. Backtrack another step if we can
-            elif len(self._backtrack) > 0:
-                print("Backtrack another step if we can. Backtrack (pop) to ({0}, {1})".format(
-                    self._backtrack[-1][0], self._backtrack[-1][1]))
-                GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.move, None, self._getDirection(self._backtrack.pop())))
+                    self, Action.move, None, self._getDirection(self._frontier.pop())))
             else:
-                raise RuntimeError("Backtracked into a brick wall whilst exploring! Expected point ({0},{1}) unreachable".format(
-                    self._frontier[-1][0], self._frontier[-1][1]))
-                GridObject.__setattr__(self, "_currentAction", Action(
-                    self, Action.inaction, None, -1))
-            return self._currentAction
-        raise RuntimeError(
-            "Ran off the edge of the map! No map location exists for ({0},{1})".format(x, y))
-        GridObject.__setattr__(self, "_currentAction",
-                               Action(self, Action.inaction, None, -1))
+                # backtrack
+                if len(self._backtrack) > 0:
+                    GridObject.__setattr__(self, "_currentAction", Action(
+                        self, Action.move, None, self._getDirection(self._backtrack.pop())))
+                else:
+                    # nowhere to go. No backtrack, no frontier.
+                    raise()
+        else:
+            GridObject.__setattr__(self, "_currentAction", Action(
+                self, Action.inaction, None, 0))
+
         return self._currentAction
 
     # TODO
@@ -240,29 +211,27 @@ class GridAgent(GridObject):
 
     # convenience function allows us to extract the direction to a target location
     def _getDirection(self, target):
-        if target[0] == self.x:
-            if target[1] == self.y:
-                return self._world.Nowhere
-            elif target[1] > self.y:
-                return self._world.South
-            else:
-                return self._world.North
-        elif target[0] < self.x:
-            if target[1] != self.y:
-                return self._world.Nowhere
-            else:
-                return self._world.West
+        # [2021-10-27 SM] changed to adjacent-only cells
+        if target[0] == self.x and target[1] == self.y - 1:
+            return self._world.North
+        elif target[0] == self.x + 1 and target[1] == self.y:
+            return self._world.East
+        elif target[0] == self.x and target[1] == self.y + 1:
+            return self._world.South
+        elif target[0] == self.x - 1 and target[1] == self.y:
+            return self._world.West
         else:
-            if target[1] != self.y:
-                return self._world.Nowhere
-            else:
-                return self._world.East
+            return self._world.Nowhere
 
     # an efficient way to identify if a tuple is in a list. Creates a python generator expression to evaluate.
     def _inFrontier(self, target):
+        # deprecated
+        return self.inTupleList(target, self._frontier)
+
+    def inTupleList(self, target, list):
         try:
             nextTgt = next(
-                loc for loc in self._frontier if loc[0] == target[0] and loc[1] == target[1])
+                loc for loc in list if loc[0] == target[0] and loc[1] == target[1])
         except StopIteration:
             return None
         return nextTgt

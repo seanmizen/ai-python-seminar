@@ -179,11 +179,11 @@ class GridAgent(GridObject):
                 # TODO
                 # ----- Choose which search method you are using with these lines -------
 
-                # self._curPath = self._iterativeDeepeningSearch(
-                #    currentLoc, self._goals[0])
                 self._curPath = self._depthFirstSearch(
                     currentLoc, self._goals[0])
                 # self._curPath = self._breadthFirstSearch(
+                #    currentLoc, self._goals[0])
+                # self._curPath = self._iterativeDeepeningSearch(
                 #    currentLoc, self._goals[0])
                 # self._curPath = self._AStarSearch(currentLoc, self._goals[0])
 
@@ -231,7 +231,7 @@ class GridAgent(GridObject):
     # allows the point to be inserted wherever desired in the list.
     def addGoalPoint(self, x, y, priority=-1):
         # some points may be reachable, but not in the map because they have been optimised
-        # away We can exploit the geometries of the GridWorld to derive these points, because
+        # away. We can exploit the geometries of the GridWorld to derive these points, because
         # a valid goal MUST lie between 2 points which are in the map, which share either an
         # x or y coordinate, and which are connected
         if (x, y) not in self._map:
@@ -255,9 +255,10 @@ class GridAgent(GridObject):
                     origin2 for origin2 in alignedPoints if origin2[0] > x)
             except StopIteration:
                 pass
-            # a column-aligned point was found. Does it have a connection (an edge) to a
-            # neighbouring point lying above the goal?
+
             if nextInColumn is not None:
+                # a column-aligned point was found. Does it have a connection (an edge) to a
+                # neighbouring point lying above the goal?
                 previousInColumn = None
                 try:
                     previousInColumn = next(dst for dst in sorted([loc3 for loc3 in self._map[nextInColumn]
@@ -275,12 +276,13 @@ class GridAgent(GridObject):
                     self._map[nextInColumn][(x, y)] = nextInColumn[1]-y
                     del self._map[previousInColumn][nextInColumn]
                     del self._map[nextInColumn][previousInColumn]
-            # same logic, for row-aligned points
+
             if nextInRow is not None:
+                # same logic, for row-aligned points
                 previousInRow = None
                 try:
                     previousInRow = next(dst2 for dst2 in sorted([loc4 for loc4 in self._map[nextInRow]
-                                                                  if loc3[1] == y and loc3[0] < x],
+                                                                  if loc4[1] == y and loc4[0] < x],
                                                                  reverse=True))
                 except StopIteration:
                     pass
@@ -331,9 +333,9 @@ class GridAgent(GridObject):
     # an efficient way to identify if a tuple is in a list. Creates a python generator expression to evaluate.
     def _inFrontier(self, target):
         # deprecated
-        return self.inTupleList(target, self._frontier)
+        return self._inTupleList(target, self._frontier)
 
-    def inTupleList(self, target, list):
+    def _inTupleList(self, target, list):
         try:
             nextTgt = next(
                 loc for loc in list if loc[0] == target[0] and loc[1] == target[1])
@@ -341,52 +343,62 @@ class GridAgent(GridObject):
             return None
         return nextTgt
 
-    # TODO
-    # -------------- These are the methods you need to implement for the Week 2 practical --------
+    def _depthFirstSearch_original(self, start, target, ply=0, explored=None):
+        # Problems with depthFirst:
+        # -It will find the FIRST result it can, not the most optimal.
+        # TODO find out if we want t o
 
-    # all these searches take a start point and a target, and return a path list ordered from start
-    # to target, of the nodes the agent should traverse to reach the target
+        x = start[0]
+        y = start[1]
+        print("_depthFirstSearch_original at ({0}, {1})".format(x, y))
 
-    # TODO
-    # breadth-first search should expand each location completely before moving to the next. In the
-    # gridworld, this isn't crippling, the branching factor is only 4, but consider how the problem
-    # would scale to a 100*100 grid (!)
-    def _breadthFirstSearch(self, start, target):
-
-        return None
-
-    # TODO
-    # depth-first search expands each branch. This is most efficiently done recursively, and
-    # by using a ply argument, we can trivially implement iterative deepening. An explored
-    # parameter - a list of expanded nodes - makes sure we can't end up in endless loops
-    def _depthFirstSearch(self, start, target, ply=0, explored=None):
-        # self._currentAction = Action(self, Action.inaction, None, 0)
-        # self.owned = []  # any objects the agent may possess
-        # a dictionary of (x,y) positions containing a target dictionary of accessible locations with distances
-        # self._map = {}
-        # self._frontier = [(self.x, self.y)]  # initialise our start point
-        # this will keep track of what our path has been, so we can navigate back to a starting point
-        # self._backtrack = []
-        # what should the agent's goal(s) be? This can be set either internally or externally
-        # self._goals = []
-        # self._curPath = None  # this will be the path list the agent will follow. None means nowhere to go; empty indicates at destination
-
-        if ply > 5:
+        if (x, y) not in self._map:
+            self._map[(x, y)] = {}
+        if (x, y) in self._frontier:
+            self._frontier.remove((x, y))
+        if explored is None:
+            explored = []
+        if start == target:
+            return explored
+        if ply > 12:
+            print("leaving depthfirst - ply max of 12 reached")
             return
+
+        result = None
         self._backtrack.append(start)
-        here = self._world.getLocation(start[0], start[1])
+        here = self._world.getLocation(x, y)
         if here.canGo(self._world.North):
-            nextLoc = (start[0], start[1] - 1)
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            nextLoc = (x, y - 1)
+            if nextLoc not in explored:
+                explored.append(nextLoc)
+                result = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored)
+            if result is not None:
+                return result
         if here.canGo(self._world.East):
-            nextLoc = (start[0] + 1, start[1])
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            nextLoc = (x + 1, y)
+            if nextLoc not in explored:
+                explored.append(nextLoc)
+                result = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored)
+            if result is not None:
+                return result
         if here.canGo(self._world.South):
-            nextLoc = (start[0], start[1] + 1)
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            nextLoc = (x, y + 1)
+            if nextLoc not in explored:
+                explored.append(nextLoc)
+                result = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored)
+            if result is not None:
+                return result
         if here.canGo(self._world.West):
-            nextLoc = (start[0] - 1, start[1])
-            self._depthFirstSearch(nextLoc, target, ply + 1, explored)
+            nextLoc = (x - 1, y)
+            if nextLoc not in explored:
+                explored.append(nextLoc)
+                result = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored)
+            if result is not None:
+                return result
 
         # start = ???
         # target = ???
@@ -395,9 +407,95 @@ class GridAgent(GridObject):
         # NESW - North is node 1. First traversal should look like NNNNNNNNNN^ENNN (etc etc)
         return None
 
+    def _depthFirstSearch(self, start, target, ply=0, explored=None):
+        x = start[0]
+        y = start[1]
+        # print("_depthFirstSearch at ({0}, {1})".format(x, y))
+
+        if (x, y) not in self._map:
+            self._map[(x, y)] = {}
+        if (x, y) in self._frontier:
+            self._frontier.remove((x, y))
+        if explored is None:
+            explored = []
+        if start == target:
+            return explored
+        if ply > 9:
+            # print("leaving depthfirst - ply max of 12 reached")
+            return
+
+        result = None
+        result_north = None
+        result_east = None
+        result_south = None
+        result_west = None
+        self._backtrack.append(start)
+        here = self._world.getLocation(x, y)
+        if here.canGo(self._world.North):
+            nextLoc = (x, y - 1)
+            if nextLoc not in explored:
+                result_north = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored + [nextLoc])
+        if here.canGo(self._world.East):
+            nextLoc = (x + 1, y)
+            if nextLoc not in explored:
+                result_east = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored + [nextLoc])
+        if here.canGo(self._world.South):
+            nextLoc = (x, y + 1)
+            if nextLoc not in explored:
+                result_south = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored + [nextLoc])
+        if here.canGo(self._world.West):
+            nextLoc = (x - 1, y)
+            if nextLoc not in explored:
+                result_west = self._depthFirstSearch(
+                    nextLoc, target, ply + 1, explored + [nextLoc])
+
+        largest_distance = float('inf')
+
+        if result_north is not None:
+            if largest_distance > len(result_north):
+                largest_distance = len(result_north)
+                result = result_north
+        if result_east is not None:
+            if largest_distance > len(result_east):
+                largest_distance = len(result_east)
+                result = result_east
+        if result_south is not None:
+            if largest_distance > len(result_south):
+                largest_distance = len(result_south)
+                result = result_south
+        if result_west is not None:
+            if largest_distance > len(result_west):
+                largest_distance = len(result_west)
+                result = result_west
+
+        tabs = " " * ply
+        # print("!\n{0}{1}\n{2}{3}\n{4}{5}\n{6}{7}".format(tabs, distance_north,
+        #      tabs, distance_east, tabs, distance_south, tabs, distance_west))
+        #print(tabs + "traversed " + traversed)
+
+        return result
+
+    # TODO
+    # breadth-first search should expand each location completely before moving to the next. In the
+    # gridworld, this isn't crippling, the branching factor is only 4, but consider how the problem
+    # would scale to a 100*100 grid (!)
+
+    def _breadthFirstSearch(self, start, target):
+        x = start[0]
+        y = start[1]
+        print("_breadthFirstSearch at ({0}, {1})".format(x, y))
+
+        return None
+
     # TODO
     # here is the extension to iterative deepening
     def _iterativeDeepeningSearch(self, start, target):
+        x = start[0]
+        y = start[1]
+        print("depthfirst at ({0}, {1})".format(x, y))
 
         return None
 
@@ -405,5 +503,8 @@ class GridAgent(GridObject):
     # A* search is an informed search, and expects a heuristic, which should be a
     # function of 2 variables, both tuples, the start, and the target.
     def _AStarSearch(self, start, target, heuristic=None):
+        x = start[0]
+        y = start[1]
+        print("depthfirst at ({0}, {1})".format(x, y))
 
         return None

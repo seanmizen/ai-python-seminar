@@ -135,7 +135,7 @@ worldValues4 = {'time': 0, 'agent1Pos': (
     round(worldX/2), round(worldY/2)), 'points': points4}
 
 # choose which world you want to be in here. You can also make your own
-worldValues = worldValues2
+worldValues = worldValues3
 if targetsOn:
     worldValues['targets'] = targets
 

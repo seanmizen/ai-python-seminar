@@ -118,6 +118,7 @@ class GridAgent(GridObject):
         # what should the agent's goal(s) be? This can be set either internally or externally
         self._goals = []
         self._curPath = None  # this will be the path list the agent will follow. None means nowhere to go; empty indicates at destination
+        self._callCount = 0
 
     # don't allow arbitrary redirection of current actions
     def __setattr__(self, name, value):
@@ -179,13 +180,26 @@ class GridAgent(GridObject):
                 # TODO
                 # ----- Choose which search method you are using with these lines -------
 
-                self._curPath = self._depthFirstSearch(
-                    currentLoc, self._goals[0])
+                # 14 calls until target:
+                # self._curPath = self._depthFirstSearch_original(
+                #    currentLoc, self._goals[0])
+
+                # 31535 calls until target:
+                # self._curPath = self._depthFirstSearch(
+                #    currentLoc, self._goals[0], 12)
+
+                # ???
                 # self._curPath = self._breadthFirstSearch(
                 #    currentLoc, self._goals[0])
-                # self._curPath = self._iterativeDeepeningSearch(
-                #    currentLoc, self._goals[0])
+
+                # 10399 calls until target
+                self._curPath = self._iterativeDeepeningSearch(
+                    currentLoc, self._goals[0])
+
+                # ???
                 # self._curPath = self._AStarSearch(currentLoc, self._goals[0])
+
+                print("Calls: " + str(self._callCount))
 
                 # could have an unreachable goal, which we just remove
                 if self._curPath is None:
@@ -347,7 +361,7 @@ class GridAgent(GridObject):
         # Problems with depthFirst:
         # -It will find the FIRST result it can, not the most optimal.
         # TODO find out if we want t o
-
+        self._callCount += 1
         x = start[0]
         y = start[1]
         print("_depthFirstSearch_original at ({0}, {1})".format(x, y))
@@ -360,7 +374,7 @@ class GridAgent(GridObject):
             explored = []
         if start == target:
             return explored
-        if ply > 12:
+        if ply > 14:
             print("leaving depthfirst - ply max of 12 reached")
             return
 
@@ -371,7 +385,7 @@ class GridAgent(GridObject):
             nextLoc = (x, y - 1)
             if nextLoc not in explored:
                 explored.append(nextLoc)
-                result = self._depthFirstSearch(
+                result = self._depthFirstSearch_original(
                     nextLoc, target, ply + 1, explored)
             if result is not None:
                 return result
@@ -379,7 +393,7 @@ class GridAgent(GridObject):
             nextLoc = (x + 1, y)
             if nextLoc not in explored:
                 explored.append(nextLoc)
-                result = self._depthFirstSearch(
+                result = self._depthFirstSearch_original(
                     nextLoc, target, ply + 1, explored)
             if result is not None:
                 return result
@@ -387,7 +401,7 @@ class GridAgent(GridObject):
             nextLoc = (x, y + 1)
             if nextLoc not in explored:
                 explored.append(nextLoc)
-                result = self._depthFirstSearch(
+                result = self._depthFirstSearch_original(
                     nextLoc, target, ply + 1, explored)
             if result is not None:
                 return result
@@ -395,7 +409,7 @@ class GridAgent(GridObject):
             nextLoc = (x - 1, y)
             if nextLoc not in explored:
                 explored.append(nextLoc)
-                result = self._depthFirstSearch(
+                result = self._depthFirstSearch_original(
                     nextLoc, target, ply + 1, explored)
             if result is not None:
                 return result
@@ -410,6 +424,7 @@ class GridAgent(GridObject):
     def _depthFirstSearch(self, start, target, ply=0, explored=None):
         x = start[0]
         y = start[1]
+        self._callCount += 1
         # print("_depthFirstSearch at ({0}, {1})".format(x, y))
 
         if (x, y) not in self._map:
@@ -420,7 +435,7 @@ class GridAgent(GridObject):
             explored = []
         if start == target:
             return explored
-        if ply > 9:
+        if ply == 0:
             # print("leaving depthfirst - ply max of 12 reached")
             return
 
@@ -435,22 +450,22 @@ class GridAgent(GridObject):
             nextLoc = (x, y - 1)
             if nextLoc not in explored:
                 result_north = self._depthFirstSearch(
-                    nextLoc, target, ply + 1, explored + [nextLoc])
+                    nextLoc, target, ply - 1, explored + [nextLoc])
         if here.canGo(self._world.East):
             nextLoc = (x + 1, y)
             if nextLoc not in explored:
                 result_east = self._depthFirstSearch(
-                    nextLoc, target, ply + 1, explored + [nextLoc])
+                    nextLoc, target, ply - 1, explored + [nextLoc])
         if here.canGo(self._world.South):
             nextLoc = (x, y + 1)
             if nextLoc not in explored:
                 result_south = self._depthFirstSearch(
-                    nextLoc, target, ply + 1, explored + [nextLoc])
+                    nextLoc, target, ply - 1, explored + [nextLoc])
         if here.canGo(self._world.West):
             nextLoc = (x - 1, y)
             if nextLoc not in explored:
                 result_west = self._depthFirstSearch(
-                    nextLoc, target, ply + 1, explored + [nextLoc])
+                    nextLoc, target, ply - 1, explored + [nextLoc])
 
         largest_distance = float('inf')
 
@@ -486,6 +501,7 @@ class GridAgent(GridObject):
     def _breadthFirstSearch(self, start, target):
         x = start[0]
         y = start[1]
+        self._callCount += 1
         print("_breadthFirstSearch at ({0}, {1})".format(x, y))
 
         return None
@@ -493,11 +509,15 @@ class GridAgent(GridObject):
     # TODO
     # here is the extension to iterative deepening
     def _iterativeDeepeningSearch(self, start, target):
-        x = start[0]
-        y = start[1]
-        print("depthfirst at ({0}, {1})".format(x, y))
+        result = None
+        ply = 1
+        self._callCount += 1
+        while (result is None) and (ply < 20):
+            # print("Iterative deepening search - iteration {0}.".format(ply))
+            result = self._depthFirstSearch(start, target, ply)
+            ply += 1
 
-        return None
+        return result
 
     # TODO
     # A* search is an informed search, and expects a heuristic, which should be a

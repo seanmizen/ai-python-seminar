@@ -467,23 +467,23 @@ class GridAgent(GridObject):
                 result_west = self._depthFirstSearch(
                     nextLoc, target, ply - 1, explored + [nextLoc])
 
-        largest_distance = float('inf')
+        smallest_distance = float('inf')
 
         if result_north is not None:
-            if largest_distance > len(result_north):
-                largest_distance = len(result_north)
+            if smallest_distance > len(result_north):
+                smallest_distance = len(result_north)
                 result = result_north
         if result_east is not None:
-            if largest_distance > len(result_east):
-                largest_distance = len(result_east)
+            if smallest_distance > len(result_east):
+                smallest_distance = len(result_east)
                 result = result_east
         if result_south is not None:
-            if largest_distance > len(result_south):
-                largest_distance = len(result_south)
+            if smallest_distance > len(result_south):
+                smallest_distance = len(result_south)
                 result = result_south
         if result_west is not None:
-            if largest_distance > len(result_west):
-                largest_distance = len(result_west)
+            if smallest_distance > len(result_west):
+                smallest_distance = len(result_west)
                 result = result_west
 
         tabs = " " * ply
